@@ -278,12 +278,17 @@ async function armaPdf(){
   if(aj)f.push([T.sub,money(t.sub)]);if(t.dsc)f.push([T.dsc,'-'+money(t.dsc)]);
   if(t.imp)f.push([limpia($('impNombre').value||'Tax')+' ('+num($('impPct').value)+'%):',money(t.imp)]);if(t.env)f.push([T.env,money(t.env)]);
   f.push([T.tot,money(t.total),1]);if(t.pagado){f.push([T.paid,money(t.pagado)]);f.push([T.bal,money(t.saldo),1]);}
+  y=Math.max(y,480);   // con pocas líneas, los totales quedan en la parte baja de la hoja
   if(y+f.length*19>H-60)nuevaPag(false);
   f.forEach(([a,b,fuerte])=>{doc.setFont('helvetica',fuerte?'bold':'normal');doc.setFontSize(fuerte?11:10);col(fuerte?INK:GR);doc.text(a,rateR+10-60,y,{align:'right'});col(INK);doc.text(b,amtR,y,{align:'right'});y+=19});
   // notas / términos
-  const bloque=(tit,txt)=>{if(!txt.trim())return;y+=14;if(y>H-80)nuevaPag(false);col(GR);doc.setFont('helvetica','normal');doc.setFontSize(10);doc.text(tit,M,y);y+=14;
-    wrap(txt,W-2*M,9.5).forEach(l=>{if(y>H-50)nuevaPag(false);doc.setFont('helvetica','normal');doc.setFontSize(9.5);col(INK);doc.text(l,M,y);y+=12.5})};
-  bloque(T.notes,$('notas').value);bloque(T.tcond,$('terminos').value);
+  const bloque=(tit,txt,anc)=>{if(!txt.trim())return;y+=14;if(!anc&&y>H-80)nuevaPag(false);col(GR);doc.setFont('helvetica','normal');doc.setFontSize(10);doc.text(tit,M,y);y+=14;
+    wrap(txt,W-2*M,9.5).forEach(l=>{if(!anc&&y>H-50)nuevaPag(false);doc.setFont('helvetica','normal');doc.setFontSize(9.5);col(INK);doc.text(l,M,y);y+=12.5})};
+  // notas y términos: pegados al pie de la hoja si caben; si no, siguen debajo de los totales
+  const bl=[[T.notes,$('notas').value],[T.tcond,$('terminos').value]].filter(b=>b[1].trim());
+  const need=bl.reduce((a,b)=>a+28+12.5*wrap(b[1],W-2*M,9.5).length,0),pos=H-50-need,anc=bl.length>0&&pos>=y;
+  if(anc)y=pos;
+  bl.forEach(b=>bloque(b[0],b[1],anc));
   // pie
   const n=doc.getNumberOfPages();if(n>1)for(let p=1;p<=n;p++){doc.setPage(p);doc.setFont('helvetica','normal');doc.setFontSize(8.5);col(GR);
     doc.text('# '+limpia($('numero').value),M,H-26);doc.text(T.pg(p,n),R,H-26,{align:'right'})}
