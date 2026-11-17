@@ -52,6 +52,7 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
 #msg{position:fixed;left:50%;transform:translateX(-50%);bottom:84px;background:#14202e;color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;display:none;max-width:90vw;z-index:9}
 .num{font:600 16px ui-monospace,Menlo,monospace}
 small{color:var(--muted)}
+#chips{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}#chips .mini{min-height:42px;width:100%}
 .adj{border:1px solid var(--line);border-radius:9px;padding:10px;display:grid;gap:6px;background:var(--inp)}.adj[hidden],#chips button[hidden]{display:none}
 .adj input,.adj select{background:var(--card)}
 .mini{font:600 14px system-ui;padding:10px 6px;border-radius:8px;border:1px solid var(--line);background:var(--inp);color:var(--ink);cursor:pointer}
@@ -93,7 +94,7 @@ small{color:var(--muted)}
 </section>
 <section>
   <h2>Ajustes (opcionales)</h2>
-  <div class="fila" id="chips">
+  <div id="chips">
     <button class="mini" type="button" data-adj="dsc">+ Descuento</button><button class="mini" type="button" data-adj="imp">+ Impuesto</button>
     <button class="mini" type="button" data-adj="env">+ Envío</button><button class="mini" type="button" data-adj="pag">+ Pagado</button>
   </div>
