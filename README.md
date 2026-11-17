@@ -9,6 +9,7 @@ Sin cuentas, sin suscripción y **sin guardar tus datos**: el PDF se arma en tu 
 
 ## Qué hace
 - Factura, pro forma o cotización, en **español o inglés**.
+- **Solo sale lo que usas:** descuento, impuesto, envío y «pagado» son opcionales (botones «+ Descuento», «+ Impuesto»…); lo que no usas no aparece ni en la pantalla ni en el PDF.
 - **Logo a tu gusto**: viene uno predeterminado; puedes elegir el tuyo, quitarlo (el PDF lleva solo el nombre del negocio) o volver al predeterminado. Datos del negocio y del cliente, fecha, vencimiento, condiciones de pago y orden de compra.
 - Artículos con descripción de varias líneas, cantidad y precio; **descuento** (% o monto), **impuesto** (IVA, ITBMS, IGV… el nombre y el % los pones tú), envío y pagado (calcula el saldo).
 - Varias páginas con encabezado repetido y numeración de páginas.
