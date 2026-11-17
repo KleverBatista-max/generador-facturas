@@ -19,8 +19,9 @@ label{display:grid;gap:3px;font-size:13px;color:var(--muted)}
 input,textarea,select{font:16px/1.35 inherit;font-family:inherit;color:var(--ink);background:var(--inp);border:1px solid var(--line);border-radius:7px;padding:9px 10px;width:100%}
 textarea{resize:vertical;min-height:64px}
 input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid var(--cy);outline-offset:1px}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-@media(max-width:520px){.g3{grid-template-columns:1fr 1fr}}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media(max-width:640px){.g3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.g2>*,.g3>*{min-width:0}input[type=date]{min-width:0;max-width:100%;-webkit-appearance:none;appearance:none;min-height:42px}
 .item{border:1px solid var(--line);border-radius:9px;padding:10px;display:grid;gap:8px;background:var(--inp)}
 .item input,.item textarea{background:var(--card)}
 .item .fila{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end}
@@ -34,11 +35,21 @@ input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-vis
 .bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 14px;display:flex;gap:10px;justify-content:center}
 .bar button{font:600 16px system-ui;padding:13px 18px;border-radius:9px;border:0;cursor:pointer;flex:1;max-width:260px}
 .p{background:var(--navy);color:#fff}.s{background:var(--inp);color:var(--ink);border:1px solid var(--line)!important}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);width:min(560px,calc(100% - 24px));max-height:85vh;padding:0;overflow:hidden}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+.dh{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line)}.dh b{font-size:17px}
+.dh button{background:none;border:0;color:var(--muted);font-size:26px;line-height:1;cursor:pointer;padding:0 6px}
+#histLista{overflow:auto;max-height:62vh;padding:8px 14px;display:grid;gap:8px}
+.hrow{border:1px solid var(--line);border-radius:9px;padding:10px;display:grid;gap:8px;background:var(--inp)}
+.hinfo{display:grid;gap:2px}.hinfo span{color:var(--muted);font-size:14px}
+.hbtn{display:flex;gap:8px;flex-wrap:wrap}.hbtn button{flex:1;min-width:80px;font:600 14px system-ui;padding:9px;border-radius:7px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.hbtn button[data-a=x]{color:var(--err)}
+.hnota{margin:0;padding:10px 14px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}.vacio{color:var(--muted);text-align:center;padding:24px 8px;margin:0}
 #msg{position:fixed;left:50%;transform:translateX(-50%);bottom:84px;background:#14202e;color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;display:none;max-width:90vw;z-index:9}
 .num{font:600 16px ui-monospace,Menlo,monospace}
 small{color:var(--muted)}
 </style></head><body>
-<header><img src="icon.svg" alt="" width="34" height="34" style="border-radius:8px"><h1>Generador de facturas</h1><button id="nueva">Nueva factura</button><button id="salir">Salir</button></header>
+<header><img src="icon.svg" alt="" width="34" height="34" style="border-radius:8px"><h1>Generador de facturas</h1><button id="hist">Historial</button><button id="nueva">Nueva factura</button><button id="salir">Salir</button></header>
 <main>
 <section>
   <h2>Documento</h2>
@@ -93,7 +104,9 @@ small{color:var(--muted)}
   <small>Los términos se guardan en este navegador para la próxima factura.</small>
 </section>
 </main>
-<div class="bar"><button class="s" id="bShare" hidden>Compartir</button><button class="p" id="bPdf">Descargar PDF</button></div>
+<div class="bar"><button class="p" id="bPdf">Descargar PDF</button></div>
+<dialog id="histD"><div class="dh"><b>Historial de facturas</b><button id="histX" aria-label="Cerrar">×</button></div><div id="histLista"></div>
+<p class="hnota">Se guarda solo en este navegador, no en el servidor. En otro aparato o si borras los datos del navegador, no aparece.</p></dialog>
 <div id="msg"></div>
 <script src="vendor/jspdf.umd.min.js"></script>
 <script>
@@ -148,12 +161,38 @@ function totales(){
 GUARDA.forEach(k=>$(k).addEventListener('change',guardarCfg));
 $('addItem').onclick=()=>{items.push(nuevoItem());dibujaItems();const i=document.querySelectorAll('#items .item');i[i.length-1].querySelector('input').focus()};
 async function reinicia(){
+  clearTimeout(tb);
+  try{localStorage.removeItem('fact_borrador')}catch(e){}
   items=[nuevoItem()];['vence','pago','po','cliNombre','cliDatos','desc','envio','pagado','notas'].forEach(k=>$(k).value='');
   $('fecha').value=hoy();dibujaItems();
   try{$('numero').value=(await api('api/siguiente')).numero}catch(e){}
 }
 $('nueva').onclick=()=>{if(confirm('¿Empezar una factura nueva? Se borra lo que está en pantalla.'))reinicia()};
 $('salir').onclick=async()=>{await fetch(B+'api/salir',{method:'POST'});location.reload()};
+
+/* ---------- historial y borrador (solo en este navegador) ---------- */
+const CAMPOS=['tipo','idioma','numero','fecha','vence','pago','po','cliNombre','cliDatos','desc','descTipo','envio','impNombre','impPct','pagado','notas','terminos','emNombre','emDatos'].concat($('moneda')?['moneda']:[]);
+const LS={get(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}};
+function snap(){const o={};CAMPOS.forEach(k=>o[k]=$(k).value);o.items=items.map(i=>({n:i.n,d:i.d,q:i.q,r:i.r}));o.total=calc().total;o.mod=Date.now();return o}
+function aplica(o){CAMPOS.forEach(k=>{if(o[k]!=null)$(k).value=o[k]});items=(o.items&&o.items.length?o.items:[nuevoItem()]).map(i=>({n:i.n||'',d:i.d||'',q:i.q||'1',r:i.r||''}));dibujaItems()}
+function guardaHist(){const n=$('numero').value.trim(),h=LS.get('fact_hist',[]).filter(x=>x.numero!==n);h.unshift(snap());if(!LS.set('fact_hist',h.slice(0,300)))aviso('No pude guardar el historial en este navegador')}
+let tb;const borrador=()=>{clearTimeout(tb);tb=setTimeout(()=>LS.set('fact_borrador',snap()),300)};
+document.addEventListener('input',borrador);document.addEventListener('change',borrador);
+window.addEventListener('pagehide',()=>{clearTimeout(tb);LS.set('fact_borrador',snap())});
+function dibujaHist(){
+  const h=LS.get('fact_hist',[]),l=$('histLista');l.innerHTML=h.length?'':'<p class="vacio">Aún no hay facturas. Cada vez que descargues un PDF queda guardada aquí.</p>';
+  h.forEach(e=>{const r=document.createElement('div');r.className='hrow';
+    r.innerHTML='<div class="hinfo"><b></b><span></span></div><div class="hbtn"><button data-a="e">Editar</button><button data-a="d">Duplicar</button><button data-a="x">Borrar</button></div>';
+    r.querySelector('b').textContent=e.numero+'  ·  '+(e.moneda!=null?e.moneda:'$')+((e.total||0)/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    r.querySelector('span').textContent=(e.cliNombre||'Sin cliente')+(e.fecha?' · '+e.fecha:'');
+    r.querySelector('[data-a=e]').onclick=()=>{aplica(e);$('histD').close();aviso('Editando '+e.numero+'. Descarga el PDF para actualizarla.');window.scrollTo(0,0)};
+    r.querySelector('[data-a=d]').onclick=async()=>{aplica(e);$('fecha').value=hoy();try{$('numero').value=(await api('api/siguiente')).numero}catch(x){}totales();$('histD').close();aviso('Copia lista con número nuevo');window.scrollTo(0,0)};
+    r.querySelector('[data-a=x]').onclick=()=>{if(confirm('¿Borrar la factura '+e.numero+' del historial?')){LS.set('fact_hist',LS.get('fact_hist',[]).filter(x=>x.numero!==e.numero));dibujaHist()}};
+    l.appendChild(r)});
+}
+$('hist').onclick=()=>{dibujaHist();$('histD').showModal()};$('histX').onclick=()=>$('histD').close();
+$('histD').addEventListener('click',e=>{if(e.target===$('histD'))$('histD').close()});
+function iniciar(){const b=LS.get('fact_borrador',null);if(b&&b.numero)aplica(b);else reinicia()}
 
 /* ---------- PDF ---------- */
 const L={
@@ -235,10 +274,8 @@ async function generar(){
   if(!$('cliNombre').value.trim()){aviso('Falta el nombre del cliente');$('cliNombre').focus();return null}
   if(!items.some(i=>i.n.trim())){aviso('Agrega al menos un artículo');return null}
   try{await api('api/numero',{numero:n})}catch(e){aviso(e.message);return null}
-  guardarCfg();const doc=await armaPdf();return{blob:doc.output('blob'),nombre:(L[$('idioma').value].file)+'_'+n.replace(/[^A-Za-z0-9._-]/g,'')+'.pdf'}
+  guardarCfg();guardaHist();const doc=await armaPdf();return{blob:doc.output('blob'),nombre:(L[$('idioma').value].file)+'_'+n.replace(/[^A-Za-z0-9._-]/g,'')+'.pdf'}
 }
 $('bPdf').onclick=async()=>{const r=await generar();if(!r)return;const a=document.createElement('a');a.href=URL.createObjectURL(r.blob);a.download=r.nombre;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),20000);aviso('PDF listo: '+r.nombre)};
-if(navigator.canShare&&navigator.canShare({files:[new File(['x'],'x.pdf',{type:'application/pdf'})]})){$('bShare').hidden=false;
-  $('bShare').onclick=async()=>{const r=await generar();if(!r)return;try{await navigator.share({files:[new File([r.blob],r.nombre,{type:'application/pdf'})],title:r.nombre})}catch(e){if(e.name!=='AbortError')aviso('No se pudo compartir')}}}
-reinicia();
+iniciar();
 </script></body></html>

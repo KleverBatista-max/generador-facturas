@@ -11,14 +11,15 @@ Sin cuentas, sin suscripción y **sin guardar tus datos**: el PDF se arma en tu 
 - Factura, pro forma o cotización, en **español o inglés**.
 - Tu logo (opcional), datos del negocio y del cliente, fecha, vencimiento, condiciones de pago y orden de compra.
 - Artículos con descripción de varias líneas, cantidad y precio; **descuento** (% o monto), **impuesto** (IVA, ITBMS, IGV… el nombre y el % los pones tú), envío y pagado (calcula el saldo).
-- Varias páginas con encabezado repetido, numeración de páginas, y botón **Compartir** en el teléfono.
+- Varias páginas con encabezado repetido y numeración de páginas.
+- **Historial de facturas** en tu navegador: vuelve a abrir, **edita** (monto, cantidad, lo que sea), duplica con número nuevo o borra. No se guarda en el servidor.
 - Número de factura automático (`INV20261116`, `INV20261116-2`…) que no se repite.
 - Funciona bien en el celular.
 
 ## Privacidad
 - El PDF se genera **en tu navegador** (con [jsPDF](https://github.com/parallax/jsPDF)). El servidor **no recibe** clientes, artículos ni montos.
 - El servidor solo guarda los **números de factura ya usados** (`datos/numeros.txt`) para no repetirlos. No hay historial.
-- Los datos de tu negocio, tu logo y tus términos se recuerdan solo en tu propio navegador (`localStorage`).
+- Los datos de tu negocio, tu logo, tus términos y el **historial de facturas** se guardan solo en tu propio navegador (`localStorage`). Cada aparato tiene su propio historial; si borras los datos del navegador, se pierde.
 
 ## Usar
 Necesitas Python 3.8 o más nuevo (no hay nada que instalar).
