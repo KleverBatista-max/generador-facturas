@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<script>document.write('<base href="'+(location.pathname.endsWith('/')?location.pathname:location.pathname+'/')+'">')</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Generador de facturas</title>
+<link rel="icon" type="image/svg+xml" href="icon.svg"><link rel="apple-touch-icon" href="icon-180.png"><meta name="theme-color" content="#0b1f3a">
+<style>
+:root{--bg:#eef1f5;--card:#fff;--ink:#14202e;--muted:#5d6c7c;--line:#d6dde5;--navy:#0b1f3a;--cy:#17a9d6;--inp:#f8fafc;--err:#b3261e}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1520;--card:#15202d;--ink:#e6edf4;--muted:#93a5b7;--line:#2a3a4c;--cy:#3cc3ee;--inp:#0f1923;--err:#ff8a80;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,Segoe UI,sans-serif;padding-bottom:90px}
+header{background:var(--navy);color:#fff;display:flex;align-items:center;gap:12px;padding:10px 16px}
+header img{flex:none}header h1{margin:0;font-size:18px;font-weight:600;flex:1}
+header button{background:transparent;color:#cfe3f3;border:1px solid #3b5473;border-radius:6px;padding:6px 10px;font:inherit;font-size:14px;cursor:pointer}
+main{max-width:780px;margin:0 auto;padding:14px;display:grid;gap:14px}
+section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;gap:10px}
+h2{margin:0;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+label{display:grid;gap:3px;font-size:13px;color:var(--muted)}
+input,textarea,select{font:16px/1.35 inherit;font-family:inherit;color:var(--ink);background:var(--inp);border:1px solid var(--line);border-radius:7px;padding:9px 10px;width:100%}
+textarea{resize:vertical;min-height:64px}
+input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid var(--cy);outline-offset:1px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:520px){.g3{grid-template-columns:1fr 1fr}}
+.item{border:1px solid var(--line);border-radius:9px;padding:10px;display:grid;gap:8px;background:var(--inp)}
+.item input,.item textarea{background:var(--card)}
+.item .fila{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end}
+.imp{font-weight:700;text-align:right;padding-bottom:9px;white-space:nowrap}
+.x{background:none;border:0;color:var(--err);font-size:14px;cursor:pointer;justify-self:end;padding:2px 4px}
+.add{background:none;border:2px dashed var(--line);color:var(--cy);border-radius:9px;padding:12px;font:600 15px system-ui;cursor:pointer}
+.tot{display:grid;gap:6px;justify-self:end;width:min(100%,360px)}
+.tot div{display:flex;justify-content:space-between;gap:12px}
+.tot .big{font-weight:700;font-size:19px;border-top:2px solid var(--navy);padding-top:6px}
+@media(prefers-color-scheme:dark){.tot .big{border-color:var(--cy)}}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 14px;display:flex;gap:10px;justify-content:center}
+.bar button{font:600 16px system-ui;padding:13px 18px;border-radius:9px;border:0;cursor:pointer;flex:1;max-width:260px}
+.p{background:var(--navy);color:#fff}.s{background:var(--inp);color:var(--ink);border:1px solid var(--line)!important}
+#msg{position:fixed;left:50%;transform:translateX(-50%);bottom:84px;background:#14202e;color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;display:none;max-width:90vw;z-index:9}
+.num{font:600 16px ui-monospace,Menlo,monospace}
+small{color:var(--muted)}
+</style></head><body>
+<header><img src="icon.svg" alt="" width="34" height="34" style="border-radius:8px"><h1>Generador de facturas</h1><button id="nueva">Nueva factura</button><button id="salir">Salir</button></header>
+<main>
+<section>
+  <h2>Documento</h2>
+  <div class="g3">
+    <label>Tipo<select id="tipo"><option value="proforma">Pro forma invoice</option><option value="factura">Invoice</option><option value="cotizacion">Quote</option></select></label>
+    <label>Idioma del PDF<select id="idioma"><option value="en">English</option><option value="es">Español</option></select></label>
+    <label>Número<input id="numero" class="num" autocomplete="off"></label>
+  </div>
+  <div class="g3">
+    <label>Fecha<input id="fecha" type="date"></label>
+    <label>Vence (opcional)<input id="vence" type="date"></label>
+    <label>Condiciones de pago (opcional)<input id="pago" placeholder="Ej: 50% adelanto"></label>
+  </div>
+  <div class="g2"><label>N.º de orden de compra (opcional)<input id="po"></label><label>Símbolo de moneda<input id="moneda" maxlength="4" placeholder="$"></label></div>
+</section>
+<section>
+  <h2>De (tu negocio)</h2>
+  <label>Nombre<input id="emNombre"></label>
+  <label>Logo (opcional, PNG o JPG)<input id="logoFile" type="file" accept="image/png,image/jpeg"></label>
+  <div id="logoVista" style="display:none;align-items:center;gap:10px"><img id="logoImg" alt="" style="max-height:48px;max-width:160px"><button class="x" id="logoQuitar" type="button">Quitar logo</button></div>
+  <label>Datos (una línea por renglón)<textarea id="emDatos" rows="4"></textarea></label>
+  <small>Se guarda en este navegador para la próxima vez.</small>
+</section>
+<section>
+  <h2>Cliente</h2>
+  <label>Nombre<input id="cliNombre" autocomplete="off"></label>
+  <label>Datos del cliente (RUC, dirección, correo…) opcional<textarea id="cliDatos" rows="3"></textarea></label>
+</section>
+<section>
+  <h2>Artículos</h2>
+  <div id="items" style="display:grid;gap:10px"></div>
+  <button class="add" id="addItem">+ Agregar artículo</button>
+</section>
+<section>
+  <h2>Ajustes</h2>
+  <div class="g3">
+    <label>Descuento<input id="desc" type="number" inputmode="decimal" min="0" step="any" placeholder="0"></label>
+    <label>Tipo<select id="descTipo"><option value="pct">%</option><option value="flat">$</option></select></label>
+    <label>Envío $<input id="envio" type="number" inputmode="decimal" min="0" step="any" placeholder="0"></label>
+  </div>
+  <div class="g3">
+    <label>Impuesto (nombre)<input id="impNombre" placeholder="ITBMS"></label>
+    <label>Impuesto %<input id="impPct" type="number" inputmode="decimal" min="0" step="any" placeholder="0"></label>
+    <label>Pagado $<input id="pagado" type="number" inputmode="decimal" min="0" step="any" placeholder="0"></label>
+  </div>
+  <div class="tot" id="tot"></div>
+</section>
+<section>
+  <h2>Notas y términos</h2>
+  <label>Notas (opcional)<textarea id="notas" rows="3"></textarea></label>
+  <label>Términos<textarea id="terminos" rows="6"></textarea></label>
+  <small>Los términos se guardan en este navegador para la próxima factura.</small>
+</section>
+</main>
+<div class="bar"><button class="s" id="bShare" hidden>Compartir</button><button class="p" id="bPdf">Descargar PDF</button></div>
+<div id="msg"></div>
+<script src="vendor/jspdf.umd.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const DEF={emNombre:'Mi Negocio',emDatos:'Dirección de tu negocio\nTeléfono · correo\nRUC / NIF / ID fiscal',
+ terminos:'Gracias por su preferencia. Esta factura vence en la fecha indicada; después de esa fecha pueden aplicar recargos.',
+ tipo:'factura',idioma:'es',impNombre:'Impuesto',impPct:'',descTipo:'pct',moneda:'$'};
+const GUARDA=['moneda','emNombre','emDatos','terminos','tipo','idioma','impNombre','impPct','descTipo'];
+let cfg={};try{cfg=JSON.parse(localStorage.getItem('fact_cfg')||'{}')}catch(e){}
+for(const k of GUARDA)$(k).value=cfg[k]!=null?cfg[k]:DEF[k];
+function guardarCfg(){try{const c={};for(const k of GUARDA)c[k]=$(k).value;localStorage.setItem('fact_cfg',JSON.stringify(c))}catch(e){}}
+const B=location.pathname.endsWith('/')?location.pathname:location.pathname+'/';
+async function api(p,body){const r=await fetch(B+p,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{});
+  if(r.status===401){location.reload();throw new Error('sesión');}const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('Error '+r.status));return j;}
+function aviso(t,ms=3200){const m=$('msg');m.textContent=t;m.style.display='block';clearTimeout(aviso.t);aviso.t=setTimeout(()=>m.style.display='none',ms)}
+const hoy=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+let items=[];
+function nuevoItem(){return{n:'',d:'',q:'1',r:''}}
+function dibujaItems(){
+  const c=$('items');c.innerHTML='';
+  items.forEach((it,i)=>{
+    const e=document.createElement('div');e.className='item';
+    e.innerHTML=`<label>Artículo<input data-k="n" autocomplete="off"></label>
+    <label>Descripción (opcional, una línea por renglón)<textarea data-k="d" rows="3"></textarea></label>
+    <div class="fila"><label>Cantidad<input data-k="q" type="number" inputmode="decimal" min="0" step="any"></label>
+    <label>Precio $<input data-k="r" type="number" inputmode="decimal" min="0" step="any"></label><div class="imp"></div></div>
+    ${items.length>1?'<button class="x" type="button">Quitar</button>':''}`;
+    e.querySelectorAll('[data-k]').forEach(x=>{x.value=it[x.dataset.k];x.oninput=()=>{it[x.dataset.k]=x.value;totales()}});
+    const x=e.querySelector('.x');if(x)x.onclick=()=>{items.splice(i,1);dibujaItems()};
+    it.el=e.querySelector('.imp');c.appendChild(e);
+  });totales();
+}
+const num=v=>{const n=parseFloat(String(v).replace(',','.'));return isFinite(n)&&n>0?n:0};
+const money=c=>(($('moneda').value||'').trim())+(c/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+function calc(){
+  const lineas=items.map(it=>Math.round(num(it.q)*Math.round(num(it.r)*100)));
+  const sub=lineas.reduce((a,b)=>a+b,0);
+  const dsc=$('descTipo').value==='pct'?Math.round(sub*Math.min(num($('desc').value),100)/100):Math.min(Math.round(num($('desc').value)*100),sub);
+  const base=sub-dsc, imp=Math.round(base*num($('impPct').value)/100), env=Math.round(num($('envio').value)*100);
+  const total=base+imp+env, pagado=Math.round(num($('pagado').value)*100);
+  return{lineas,sub,dsc,imp,env,total,pagado,saldo:total-pagado};
+}
+function totales(){
+  const t=calc();items.forEach((it,i)=>{if(it.el)it.el.textContent=money(t.lineas[i])});
+  const f=[];const aj=t.dsc||t.imp||t.env;
+  if(aj)f.push(['Subtotal',t.sub]);if(t.dsc)f.push(['Descuento','-'+money(t.dsc).slice(0)]);
+  if(t.imp)f.push([($('impNombre').value||'Impuesto')+' ('+num($('impPct').value)+'%)',t.imp]);if(t.env)f.push(['Envío',t.env]);
+  f.push(['Total',t.total]);if(t.pagado){f.push(['Pagado',t.pagado]);}
+  $('tot').innerHTML=f.map(([a,b],i)=>`<div class="${a==='Total'&&!t.pagado?'big':''}"><span>${a}</span><span>${typeof b==='string'?b:money(b)}</span></div>`).join('')+(t.pagado?`<div class="big"><span>Saldo a pagar</span><span>${money(t.saldo)}</span></div>`:'');
+}
+['desc','descTipo','envio','impNombre','impPct','pagado'].forEach(k=>$(k).oninput=totales);
+GUARDA.forEach(k=>$(k).addEventListener('change',guardarCfg));
+$('addItem').onclick=()=>{items.push(nuevoItem());dibujaItems();const i=document.querySelectorAll('#items .item');i[i.length-1].querySelector('input').focus()};
+async function reinicia(){
+  items=[nuevoItem()];['vence','pago','po','cliNombre','cliDatos','desc','envio','pagado','notas'].forEach(k=>$(k).value='');
+  $('fecha').value=hoy();dibujaItems();
+  try{$('numero').value=(await api('api/siguiente')).numero}catch(e){}
+}
+$('nueva').onclick=()=>{if(confirm('¿Empezar una factura nueva? Se borra lo que está en pantalla.'))reinicia()};
+$('salir').onclick=async()=>{await fetch(B+'api/salir',{method:'POST'});location.reload()};
+
+/* ---------- PDF ---------- */
+const L={
+ en:{date:'Date:',due:'Due Date:',terms:'Payment Terms:',po:'PO Number:',bal:'Balance Due:',bill:'Bill To:',item:'Item',qty:'Quantity',rate:'Rate',amt:'Amount',sub:'Subtotal:',dsc:'Discount:',env:'Shipping:',tot:'Total:',paid:'Amount Paid:',notes:'Notes:',tcond:'Terms:',pg:(a,b)=>`Page ${a} of ${b}`,
+  file:'Invoice',title:{proforma:['PRO FORMA','INVOICE'],factura:['INVOICE'],cotizacion:['QUOTE']},mes:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],fmt:(m,d,y)=>`${m} ${d}, ${y}`},
+ es:{date:'Fecha:',due:'Vence:',terms:'Condiciones de pago:',po:'N.º de orden:',bal:'Saldo a pagar:',bill:'Facturar a:',item:'Descripción',qty:'Cantidad',rate:'Precio',amt:'Importe',sub:'Subtotal:',dsc:'Descuento:',env:'Envío:',tot:'Total:',paid:'Pagado:',notes:'Notas:',tcond:'Términos:',pg:(a,b)=>`Página ${a} de ${b}`,
+  file:'Factura',title:{proforma:['FACTURA','PROFORMA'],factura:['FACTURA'],cotizacion:['COTIZACIÓN']},mes:['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'],fmt:(m,d,y)=>`${d} ${m} ${y}`}};
+let LOGO=null;try{LOGO=localStorage.getItem('fact_logo')}catch(e){}
+function vistaLogo(){$('logoVista').style.display=LOGO?'flex':'none';if(LOGO)$('logoImg').src=LOGO}
+$('logoFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const im=new Image();im.onload=()=>{const k=Math.min(1,500/im.width),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
+  c.getContext('2d').drawImage(im,0,0,c.width,c.height);LOGO=c.toDataURL('image/png');try{localStorage.setItem('fact_logo',LOGO)}catch(x){}vistaLogo()};im.onerror=()=>aviso('No pude leer esa imagen');im.src=URL.createObjectURL(f)};
+$('logoQuitar').onclick=()=>{LOGO=null;try{localStorage.removeItem('fact_logo')}catch(e){}$('logoFile').value='';vistaLogo()};vistaLogo();
+const imgSize=d=>new Promise(r=>{const i=new Image();i.onload=()=>r([i.width,i.height]);i.src=d});
+function limpia(s){return String(s||'').replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[–—]/g,'-').replace(/•/g,'-').replace(/\r/g,'')}
+async function armaPdf(){
+  const {jsPDF}=window.jspdf, T=L[$('idioma').value], t=calc();
+  const doc=new jsPDF({unit:'pt',format:'letter'}); doc.setLineHeightFactor(1.25);
+  const W=612,H=792,M=42,R=W-M,NAVY=[11,31,58],CY=[23,169,214],GR=[118,126,136],INK=[28,32,38],LN=[224,228,233];
+  const col=c=>doc.setTextColor(c[0],c[1],c[2]);
+  const fecha=s=>{if(!s)return'';const [y,m,d]=s.split('-');return T.fmt(T.mes[+m-1],+d,y)};
+  const wrap=(s,w,size,font)=>{doc.setFont('helvetica',font||'normal');doc.setFontSize(size);return limpia(s).split('\n').flatMap(l=>l.trim()===''?['']:doc.splitTextToSize(l,w))};
+  const qtyR=R-186,rateR=R-100,amtR=R-10,itemW=qtyR-92-(M+10);
+  // logo
+  let yL=118;
+  if(LOGO){const [iw,ih]=await imgSize(LOGO),k=Math.min(160/iw,70/ih);doc.addImage(LOGO,'PNG',M-2,30,iw*k,ih*k)}
+  // título
+  const tl=T.title[$('tipo').value];doc.setFont('helvetica','normal');doc.setFontSize(28);col([50,56,64]);
+  tl.forEach((s,i)=>doc.text(s,R,58+i*32,{align:'right'}));
+  const yN=58+(tl.length-1)*32+24;doc.setFontSize(11);col(GR);doc.text('# '+limpia($('numero').value),R,yN,{align:'right'});
+  // De
+  let y=yL;col(INK);if(LOGO){doc.setFont('helvetica','bold');doc.setFontSize(10.5);doc.text(limpia($('emNombre').value),M,y);y+=14}else{wrap($('emNombre').value,270,17,'bold').slice(0,2).forEach((l,i)=>{doc.setFont('helvetica','bold');doc.setFontSize(17);doc.text(l,M,52+i*21)})}
+  doc.setFont('helvetica','normal');doc.setFontSize(9.5);
+  wrap($('emDatos').value,260,9.5).forEach(l=>{doc.text(l,M,y);y+=12.5});
+  const yFrom=y;
+  // meta derecha
+  let ym=Math.max(yN+34,140);const metas=[[T.date,fecha($('fecha').value)],[T.terms,$('pago').value],[T.due,fecha($('vence').value)],[T.po,$('po').value]].filter(m=>m[1]);
+  doc.setFontSize(10);metas.forEach(([a,b])=>{col(GR);doc.setFont('helvetica','normal');doc.text(a,R-118,ym,{align:'right'});col(INK);doc.text(limpia(b),R,ym,{align:'right'});ym+=17});
+  ym+=4;doc.setFillColor(243,245,248);doc.roundedRect(R-262,ym-14,262,30,3,3,'F');
+  doc.setFillColor(...CY);doc.rect(R-262,ym-14,3,30,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(11);col(INK);doc.text(T.bal,R-118,ym+5,{align:'right'});doc.text(money(t.saldo),R,ym+5,{align:'right'});
+  // Bill to
+  y=Math.max(yFrom,ym+16)+22;col(GR);doc.setFont('helvetica','normal');doc.setFontSize(10);doc.text(T.bill,M,y);y+=15;
+  col(INK);doc.setFont('helvetica','bold');doc.setFontSize(11);wrap($('cliNombre').value,300,11,'bold').forEach(l=>{doc.text(l,M,y);y+=14});
+  doc.setFont('helvetica','normal');doc.setFontSize(9.5);wrap($('cliDatos').value,300,9.5).forEach(l=>{doc.text(l,M,y);y+=12.5});
+  y+=18;
+  // tabla
+  const cab=()=>{doc.setFillColor(...NAVY);doc.roundedRect(M,y,W-2*M,24,3,3,'F');doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(255,255,255);
+    doc.text(T.item,M+10,y+15.5);doc.text(T.qty,qtyR,y+15.5,{align:'right'});doc.text(T.rate,rateR,y+15.5,{align:'right'});doc.text(T.amt,amtR,y+15.5,{align:'right'});y+=24+14};
+  const nuevaPag=(conCab)=>{doc.addPage();y=46;if(conCab)cab()};
+  cab();
+  items.forEach((it,i)=>{
+    const nom=wrap(it.n||' ',itemW,10.5,'bold'), des=it.d.trim()?wrap(it.d,itemW,9.5):[];
+    if(y+14*Math.min(nom.length+des.length,3)>H-60)nuevaPag(true);
+    const q=num(it.q),r=Math.round(num(it.r)*100),primera=y;
+    doc.setFont('helvetica','normal');doc.setFontSize(10);col(INK);
+    doc.text(String(q%1?q:Math.round(q)),qtyR,primera,{align:'right'});doc.text(money(r),rateR,primera,{align:'right'});doc.text(money(t.lineas[i]),amtR,primera,{align:'right'});
+    nom.forEach(l=>{if(y>H-60)nuevaPag(true);doc.setFont('helvetica','bold');doc.setFontSize(10.5);col(INK);doc.text(l,M+10,y);y+=14});
+    des.forEach(l=>{if(y>H-60)nuevaPag(true);doc.setFont('helvetica','normal');doc.setFontSize(9.5);col(GR);doc.text(l,M+10,y);y+=12.5});
+    y+=6;doc.setDrawColor(...LN);doc.setLineWidth(.6);doc.line(M,y,R,y);y+=16;
+  });
+  // totales
+  const f=[];const aj=t.dsc||t.imp||t.env;
+  if(aj)f.push([T.sub,money(t.sub)]);if(t.dsc)f.push([T.dsc,'-'+money(t.dsc)]);
+  if(t.imp)f.push([limpia($('impNombre').value||'Tax')+' ('+num($('impPct').value)+'%):',money(t.imp)]);if(t.env)f.push([T.env,money(t.env)]);
+  f.push([T.tot,money(t.total),1]);if(t.pagado){f.push([T.paid,money(t.pagado)]);f.push([T.bal,money(t.saldo),1]);}
+  if(y+f.length*19>H-60)nuevaPag(false);
+  f.forEach(([a,b,fuerte])=>{doc.setFont('helvetica',fuerte?'bold':'normal');doc.setFontSize(fuerte?11:10);col(fuerte?INK:GR);doc.text(a,rateR+10-60,y,{align:'right'});col(INK);doc.text(b,amtR,y,{align:'right'});y+=19});
+  // notas / términos
+  const bloque=(tit,txt)=>{if(!txt.trim())return;y+=14;if(y>H-80)nuevaPag(false);col(GR);doc.setFont('helvetica','normal');doc.setFontSize(10);doc.text(tit,M,y);y+=14;
+    wrap(txt,W-2*M,9.5).forEach(l=>{if(y>H-50)nuevaPag(false);doc.setFont('helvetica','normal');doc.setFontSize(9.5);col(INK);doc.text(l,M,y);y+=12.5})};
+  bloque(T.notes,$('notas').value);bloque(T.tcond,$('terminos').value);
+  // pie
+  const n=doc.getNumberOfPages();if(n>1)for(let p=1;p<=n;p++){doc.setPage(p);doc.setFont('helvetica','normal');doc.setFontSize(8.5);col(GR);
+    doc.text('# '+limpia($('numero').value),M,H-26);doc.text(T.pg(p,n),R,H-26,{align:'right'})}
+  return doc;
+}
+async function generar(){
+  const n=$('numero').value.trim();if(!n){aviso('Falta el número de factura');return null}
+  if(!$('cliNombre').value.trim()){aviso('Falta el nombre del cliente');$('cliNombre').focus();return null}
+  if(!items.some(i=>i.n.trim())){aviso('Agrega al menos un artículo');return null}
+  try{await api('api/numero',{numero:n})}catch(e){aviso(e.message);return null}
+  guardarCfg();const doc=await armaPdf();return{blob:doc.output('blob'),nombre:(L[$('idioma').value].file)+'_'+n.replace(/[^A-Za-z0-9._-]/g,'')+'.pdf'}
+}
+$('bPdf').onclick=async()=>{const r=await generar();if(!r)return;const a=document.createElement('a');a.href=URL.createObjectURL(r.blob);a.download=r.nombre;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),20000);aviso('PDF listo: '+r.nombre)};
+if(navigator.canShare&&navigator.canShare({files:[new File(['x'],'x.pdf',{type:'application/pdf'})]})){$('bShare').hidden=false;
+  $('bShare').onclick=async()=>{const r=await generar();if(!r)return;try{await navigator.share({files:[new File([r.blob],r.nombre,{type:'application/pdf'})],title:r.nombre})}catch(e){if(e.name!=='AbortError')aviso('No se pudo compartir')}}}
+reinicia();
+</script></body></html>

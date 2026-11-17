@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><script>document.write('<base href="'+(location.pathname.endsWith('/')?location.pathname:location.pathname+'/')+'">')</script>
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>Entrar · Generador de facturas</title><link rel="icon" type="image/svg+xml" href="icon.svg"><link rel="apple-touch-icon" href="icon-180.png">
+<style>
+:root{--bg:#eef1f5;--card:#fff;--ink:#14202e;--muted:#5d6c7c;--line:#d6dde5;--navy:#0b1f3a;--err:#b3261e}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1520;--card:#15202d;--ink:#e6edf4;--muted:#93a5b7;--line:#2a3a4c;--err:#ff8a80;color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,sans-serif;min-height:100vh;display:grid;place-items:center;padding:16px}
+form{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:24px;width:100%;max-width:360px;display:grid;gap:12px}
+h1{margin:0;font-size:22px}label{display:grid;gap:4px;font-size:14px;color:var(--muted)}
+input{font:18px system-ui;padding:10px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink);width:100%}
+button{font:600 16px system-ui;padding:12px;border:0;border-radius:7px;background:var(--navy);color:#fff;cursor:pointer}
+input:focus-visible,button:focus-visible{outline:3px solid #17a9d6;outline-offset:2px}#m{color:var(--err);min-height:1.4em}
+</style></head><body>
+<form id="f"><img src="logo.svg" alt="Invoice Generator" height="48" style="justify-self:start"><h1 style="display:none">Generador de facturas</h1>
+<label>Contraseña<input id="p" type="password" autocomplete="current-password" required autofocus></label><div id="m"></div><button type="submit">Entrar</button></form>
+<script>
+const B=location.pathname.endsWith('/')?location.pathname:location.pathname+'/';
+document.getElementById('f').onsubmit=async e=>{e.preventDefault();const m=document.getElementById('m');m.textContent='Entrando…';
+ try{const r=await fetch(B+'api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clave:document.getElementById('p').value})});
+  const j=await r.json().catch(()=>({}));if(!r.ok){m.textContent=j.error||('Error '+r.status);return}location.replace(B)}catch(x){m.textContent='Sin conexión'}};
+</script></body></html>
