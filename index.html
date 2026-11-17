@@ -48,6 +48,7 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
 #msg{position:fixed;left:50%;transform:translateX(-50%);bottom:84px;background:#14202e;color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;display:none;max-width:90vw;z-index:9}
 .num{font:600 16px ui-monospace,Menlo,monospace}
 small{color:var(--muted)}
+.mini{font:600 14px system-ui;padding:10px 6px;border-radius:8px;border:1px solid var(--line);background:var(--inp);color:var(--ink);cursor:pointer}
 </style></head><body>
 <header><img src="icon.svg" alt="" width="34" height="34" style="border-radius:8px"><h1>Generador de facturas</h1><button id="hist">Historial</button><button id="nueva">Nueva factura</button><button id="salir">Salir</button></header>
 <main>
@@ -56,7 +57,7 @@ small{color:var(--muted)}
   <div class="g3">
     <label>Tipo<select id="tipo"><option value="proforma">Pro forma invoice</option><option value="factura">Invoice</option><option value="cotizacion">Quote</option></select></label>
     <label>Idioma del PDF<select id="idioma"><option value="en">English</option><option value="es">Español</option></select></label>
-    <label>Número<input id="numero" class="num" autocomplete="off"></label>
+    <label>Número (puedes escribir el tuyo)<span style="display:flex;gap:6px"><input id="numero" class="num" autocomplete="off" style="flex:1;min-width:0"><button class="mini" id="numAuto" type="button" title="Poner el número automático" style="padding:0 12px">↻</button></span></label>
   </div>
   <div class="g3">
     <label>Fecha<input id="fecha" type="date"></label>
@@ -68,8 +69,9 @@ small{color:var(--muted)}
 <section>
   <h2>De (tu negocio)</h2>
   <label>Nombre<input id="emNombre"></label>
-  <label>Logo (opcional, PNG o JPG)<input id="logoFile" type="file" accept="image/png,image/jpeg"></label>
-  <div id="logoVista" style="display:none;align-items:center;gap:10px"><img id="logoImg" alt="" style="max-height:48px;max-width:160px"><button class="x" id="logoQuitar" type="button">Quitar logo</button></div>
+  <div id="logoVista" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><img id="logoImg" alt="Logo" style="max-height:56px;max-width:170px;background:#fff;border-radius:6px;padding:3px;border:1px solid var(--line)"><span id="logoTxt" style="color:var(--muted);font-size:13px"></span></div>
+  <div class="g3"><button class="mini" id="logoSubir" type="button">Elegir otro logo</button><button class="mini" id="logoNada" type="button">Sin logo</button><button class="mini" id="logoDef" type="button">Logo predeterminado</button></div>
+  <input id="logoFile" type="file" accept="image/png,image/jpeg" hidden>
   <label>Datos (una línea por renglón)<textarea id="emDatos" rows="4"></textarea></label>
   <small>Se guarda en este navegador para la próxima vez.</small>
 </section>
@@ -200,11 +202,17 @@ const L={
   file:'Invoice',title:{proforma:['PRO FORMA','INVOICE'],factura:['INVOICE'],cotizacion:['QUOTE']},mes:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],fmt:(m,d,y)=>`${m} ${d}, ${y}`},
  es:{date:'Fecha:',due:'Vence:',terms:'Condiciones de pago:',po:'N.º de orden:',bal:'Saldo a pagar:',bill:'Facturar a:',item:'Descripción',qty:'Cantidad',rate:'Precio',amt:'Importe',sub:'Subtotal:',dsc:'Descuento:',env:'Envío:',tot:'Total:',paid:'Pagado:',notes:'Notas:',tcond:'Términos:',pg:(a,b)=>`Página ${a} de ${b}`,
   file:'Factura',title:{proforma:['FACTURA','PROFORMA'],factura:['FACTURA'],cotizacion:['COTIZACIÓN']},mes:['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'],fmt:(m,d,y)=>`${d} ${m} ${y}`}};
-let LOGO=null;try{LOGO=localStorage.getItem('fact_logo')}catch(e){}
-function vistaLogo(){$('logoVista').style.display=LOGO?'flex':'none';if(LOGO)$('logoImg').src=LOGO}
-$('logoFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const im=new Image();im.onload=()=>{const k=Math.min(1,500/im.width),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
-  c.getContext('2d').drawImage(im,0,0,c.width,c.height);LOGO=c.toDataURL('image/png');try{localStorage.setItem('fact_logo',LOGO)}catch(x){}vistaLogo()};im.onerror=()=>aviso('No pude leer esa imagen');im.src=URL.createObjectURL(f)};
-$('logoQuitar').onclick=()=>{LOGO=null;try{localStorage.removeItem('fact_logo')}catch(e){}$('logoFile').value='';vistaLogo()};vistaLogo();
+const LOGO_DEF='logo-default.png';
+let LOGOSEL=null;try{LOGOSEL=localStorage.getItem('fact_logo')}catch(e){}   // null = predeterminado, '' = sin logo, data:... = el tuyo
+const urlData=async u=>{const b=await (await fetch(B+u)).blob();return new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(b)})};
+const logoActual=async()=>LOGOSEL===''?null:(LOGOSEL||await urlData(LOGO_DEF));
+function vistaLogo(){const im=$('logoImg');im.style.display=LOGOSEL===''?'none':'';im.src=LOGOSEL||LOGO_DEF;$('logoTxt').textContent=LOGOSEL===''?'Sin logo: el PDF lleva solo el nombre de tu negocio':LOGOSEL?'Tu logo':'Logo predeterminado'}
+function setLogo(v){LOGOSEL=v;try{v===null?localStorage.removeItem('fact_logo'):localStorage.setItem('fact_logo',v)}catch(e){}vistaLogo()}
+$('logoSubir').onclick=()=>$('logoFile').click();
+$('logoFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const im=new Image();im.onload=()=>{const k=Math.min(1,500/im.width),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
+  c.getContext('2d').drawImage(im,0,0,c.width,c.height);setLogo(c.toDataURL('image/png'))};im.onerror=()=>aviso('No pude leer esa imagen');im.src=URL.createObjectURL(f)};
+$('logoNada').onclick=()=>setLogo('');$('logoDef').onclick=()=>setLogo(null);vistaLogo();
+$('numAuto').onclick=async()=>{try{$('numero').value=(await api('api/siguiente')).numero;aviso('Número automático puesto')}catch(e){}};
 const imgSize=d=>new Promise(r=>{const i=new Image();i.onload=()=>r([i.width,i.height]);i.src=d});
 function limpia(s){return String(s||'').replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[–—]/g,'-').replace(/•/g,'-').replace(/\r/g,'')}
 async function armaPdf(){
@@ -216,14 +224,14 @@ async function armaPdf(){
   const wrap=(s,w,size,font)=>{doc.setFont('helvetica',font||'normal');doc.setFontSize(size);return limpia(s).split('\n').flatMap(l=>l.trim()===''?['']:doc.splitTextToSize(l,w))};
   const qtyR=R-186,rateR=R-100,amtR=R-10,itemW=qtyR-92-(M+10);
   // logo
-  let yL=118;
-  if(LOGO){const [iw,ih]=await imgSize(LOGO),k=Math.min(160/iw,70/ih);doc.addImage(LOGO,'PNG',M-2,30,iw*k,ih*k)}
+  let yL=118;const LG=await logoActual();
+  if(LG){const [iw,ih]=await imgSize(LG),k=Math.min(160/iw,70/ih);doc.addImage(LG,LG.startsWith('data:image/jpeg')?'JPEG':'PNG',M-2,30,iw*k,ih*k)}
   // título
   const tl=T.title[$('tipo').value];doc.setFont('helvetica','normal');doc.setFontSize(28);col([50,56,64]);
   tl.forEach((s,i)=>doc.text(s,R,58+i*32,{align:'right'}));
   const yN=58+(tl.length-1)*32+24;doc.setFontSize(11);col(GR);doc.text('# '+limpia($('numero').value),R,yN,{align:'right'});
   // De
-  let y=yL;col(INK);if(LOGO){doc.setFont('helvetica','bold');doc.setFontSize(10.5);doc.text(limpia($('emNombre').value),M,y);y+=14}else{wrap($('emNombre').value,270,17,'bold').slice(0,2).forEach((l,i)=>{doc.setFont('helvetica','bold');doc.setFontSize(17);doc.text(l,M,52+i*21)})}
+  let y=yL;col(INK);if(LG){doc.setFont('helvetica','bold');doc.setFontSize(10.5);doc.text(limpia($('emNombre').value),M,y);y+=14}else{wrap($('emNombre').value,270,17,'bold').slice(0,2).forEach((l,i)=>{doc.setFont('helvetica','bold');doc.setFontSize(17);doc.text(l,M,52+i*21)})}
   doc.setFont('helvetica','normal');doc.setFontSize(9.5);
   wrap($('emDatos').value,260,9.5).forEach(l=>{doc.text(l,M,y);y+=12.5});
   const yFrom=y;
@@ -274,7 +282,7 @@ async function generar(){
   if(!$('cliNombre').value.trim()){aviso('Falta el nombre del cliente');$('cliNombre').focus();return null}
   if(!items.some(i=>i.n.trim())){aviso('Agrega al menos un artículo');return null}
   try{await api('api/numero',{numero:n})}catch(e){aviso(e.message);return null}
-  guardarCfg();guardaHist();const doc=await armaPdf();return{blob:doc.output('blob'),nombre:(L[$('idioma').value].file)+'_'+n.replace(/[^A-Za-z0-9._-]/g,'')+'.pdf'}
+  guardarCfg();guardaHist();const doc=await armaPdf();return{blob:doc.output('blob'),nombre:(L[$('idioma').value].file)+'_'+n.replace(/[^A-Za-z0-9._-]+/g,'-')+'.pdf'}
 }
 $('bPdf').onclick=async()=>{const r=await generar();if(!r)return;const a=document.createElement('a');a.href=URL.createObjectURL(r.blob);a.download=r.nombre;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),20000);aviso('PDF listo: '+r.nombre)};
 iniciar();

@@ -15,8 +15,8 @@ DATA=os.environ.get('DATA',os.path.join(ROOT,'datos')); os.makedirs(DATA,exist_o
 NUMS=os.path.join(DATA,'numeros.txt'); SEC=os.path.join(DATA,'secreto')
 CLAVE=os.environ.get('CLAVE',''); PREFIJO=re.sub(r'[^A-Za-z0-9]','',os.environ.get('PREFIJO','INV'))[:12] or 'INV'
 DURACION=30*86400; COOKIE='sesion'
-PUBLICOS={'/login.html','/icon.svg','/logo.svg','/icon-180.png'}; PRIVADOS={'/index.html','/vendor/jspdf.umd.min.js'}
-fails={}; lock=threading.Lock(); OK_NUM=re.compile(r'^[A-Za-z0-9._-]{1,40}$')
+PUBLICOS={'/login.html','/icon.svg','/logo.svg','/icon-180.png','/logo-default.png'}; PRIVADOS={'/index.html','/vendor/jspdf.umd.min.js'}
+fails={}; lock=threading.Lock(); OK_NUM=re.compile(r'^[A-Za-z0-9._/# -]{1,40}$')
 if not os.path.exists(SEC):
     fd=os.open(SEC,os.O_WRONLY|os.O_CREAT,0o600); os.write(fd,secrets.token_hex(32).encode()); os.close(fd)
 SECRETO=open(SEC,'rb').read().strip()
@@ -75,7 +75,7 @@ class H(SimpleHTTPRequestHandler):
         if p=='/api/numero':
             try: n=str(json.loads(s.cuerpo() or b'{}').get('numero','')).strip()
             except Exception: return s.reply(400,{'error':'Datos inválidos'})
-            if not OK_NUM.match(n): return s.reply(400,{'error':'Número inválido (letras, números, guion)'})
+            if not OK_NUM.match(n): return s.reply(400,{'error':'Número inválido (letras, números, guion, punto, barra)'})
             return s.reply(200,{'numero':n,'nuevo':registrar(n)})
         s.reply(404,{'error':'no'})
     def login(s):

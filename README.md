@@ -9,11 +9,11 @@ Sin cuentas, sin suscripción y **sin guardar tus datos**: el PDF se arma en tu 
 
 ## Qué hace
 - Factura, pro forma o cotización, en **español o inglés**.
-- Tu logo (opcional), datos del negocio y del cliente, fecha, vencimiento, condiciones de pago y orden de compra.
+- **Logo a tu gusto**: viene uno predeterminado; puedes elegir el tuyo, quitarlo (el PDF lleva solo el nombre del negocio) o volver al predeterminado. Datos del negocio y del cliente, fecha, vencimiento, condiciones de pago y orden de compra.
 - Artículos con descripción de varias líneas, cantidad y precio; **descuento** (% o monto), **impuesto** (IVA, ITBMS, IGV… el nombre y el % los pones tú), envío y pagado (calcula el saldo).
 - Varias páginas con encabezado repetido y numeración de páginas.
 - **Historial de facturas** en tu navegador: vuelve a abrir, **edita** (monto, cantidad, lo que sea), duplica con número nuevo o borra. No se guarda en el servidor.
-- Número de factura automático (`INV20261116`, `INV20261116-2`…) que no se repite.
+- Número de factura automático (`INV20261116`, `INV20261116-2`…) que no se repite, o **escríbelo a mano** como quieras (botón ↻ para volver al automático).
 - Funciona bien en el celular.
 
 ## Privacidad
