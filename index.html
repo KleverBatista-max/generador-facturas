@@ -11,6 +11,10 @@
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,Segoe UI,sans-serif;padding-bottom:90px}
 header{background:var(--navy);color:#fff;display:flex;align-items:center;gap:12px;padding:10px 16px}
 header img{flex:none}header h1{margin:0;font-size:18px;font-weight:600;flex:1}
+header .hb{display:flex;gap:8px;flex:none}
+header>img{flex:none;width:34px;height:34px}
+header .hb button{height:36px;min-width:0;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center}
+@media(max-width:600px){header{flex-wrap:wrap;row-gap:10px}header h1{min-width:0}header .hb{width:100%}header .hb button{flex:1 1 0}}
 header button{background:transparent;color:#cfe3f3;border:1px solid #3b5473;border-radius:6px;padding:6px 10px;font:inherit;font-size:14px;cursor:pointer}
 main{max-width:780px;margin:0 auto;padding:14px;display:grid;gap:14px}
 section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;gap:10px}
@@ -52,7 +56,7 @@ small{color:var(--muted)}
 .adj input,.adj select{background:var(--card)}
 .mini{font:600 14px system-ui;padding:10px 6px;border-radius:8px;border:1px solid var(--line);background:var(--inp);color:var(--ink);cursor:pointer}
 </style></head><body>
-<header><img src="icon.svg" alt="" width="34" height="34" style="border-radius:8px"><h1>Generador de facturas</h1><button id="hist">Historial</button><button id="nueva">Nueva factura</button><button id="salir">Salir</button></header>
+<header><img src="icon.svg" alt="" width="34" height="34" style="border-radius:8px"><h1>Generador de facturas</h1><div class="hb"><button id="hist">Historial</button><button id="nueva">Nueva factura</button><button id="salir">Salir</button></div></header>
 <main>
 <section>
   <h2>Documento</h2>
