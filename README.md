@@ -69,4 +69,4 @@ Restart=always
 A simple, free **invoice / pro forma / quote PDF generator** for small businesses. The PDF is built **in the browser**; the server only stores the invoice numbers already used (no clients, items or amounts). Run `python3 server.py`, open `http://127.0.0.1:8080`. Set `CLAVE` (password) if you expose it to the internet. Spanish and English PDFs, optional logo, discount/tax/shipping, multi-page.
 
 ## Licencia
-MIT. Incluye [jsPDF](https://github.com/parallax/jsPDF) 2.5.1 (MIT) en `vendor/`.
+Todos los derechos reservados (ver `LICENSE`): el código se puede ver, pero no copiar ni usar sin permiso. Incluye [jsPDF](https://github.com/parallax/jsPDF) 2.5.1 (MIT) en `vendor/`.
