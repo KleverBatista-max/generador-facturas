@@ -70,3 +70,7 @@ A simple, free **invoice / pro forma / quote PDF generator** for small businesse
 
 ## Licencia
 Todos los derechos reservados (ver `LICENSE`): el código se puede ver, pero no copiar ni usar sin permiso. Incluye [jsPDF](https://github.com/parallax/jsPDF) 2.5.1 (MIT) en `vendor/`.
+
+## Autor
+
+Creado por **John Batista** ([@KleverBatista-max](https://github.com/KleverBatista-max)): diseño, programación y pruebas. Hecho con ayuda de asistentes de IA (ChatGPT, Claude) como herramientas.
